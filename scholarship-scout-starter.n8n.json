@@ -1,0 +1,171 @@
+{
+  "name": "Scholarship Eligibility Scout - starter workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "scholarship-scout-demo",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-input",
+      "name": "Receive Synthetic Student Input",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $json.body ?? $json;\\nconst required = ['income','course','category','recordId'];\\nconst missing = required.filter(k => p[k] === undefined || p[k] === '');\\nreturn [{json:{recordId:p.recordId ?? 'SYNTHETIC-UNKNOWN', input:p, missingFields:missing, safeMode:true, note:'Starter workflow only. Add verified official sources and deterministic rules before use.'}}];"
+      },
+      "id": "validate-input",
+      "name": "Validate Required Inputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        250,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-missing",
+              "leftValue": "={{ $json.missingFields.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "missing-check",
+      "name": "Missing Input Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        500,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {status:'NEEDS_REVIEW', recordId:$json.recordId, missingFields:$json.missingFields, message:'Provide missing fields before evaluating.'} }}",
+        "options": {}
+      },
+      "id": "needs-review",
+      "name": "Return Needs Review",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        750,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p=$json.input;\\n// DEMO RULE ONLY — replace with verified official scheme rules.\\nconst schemes=[{id:'DEMO-SCH-01',name:'Illustrative Merit Support Scheme',ceiling:300000,courses:['B.Tech','B.E.','B.Sc.'],categories:['OBC','SC','ST','General','Other'],rule:'DEMO RULE ONLY: annual family income must be ₹3,00,000 or less; listed undergraduate courses are accepted.',sourceUrl:'https://example.org/demo-scheme-01'},{id:'DEMO-SCH-02',name:'Illustrative Category Support Scheme',ceiling:250000,courses:['B.Tech','B.E.','Diploma'],categories:['OBC','SC','ST'],rule:'DEMO RULE ONLY: annual family income must be ₹2,50,000 or less and category must be OBC, SC, or ST.',sourceUrl:'https://example.org/demo-scheme-02'}];\\nconst results=schemes.map(s=>({schemeId:s.id,name:s.name,status:(Number(p.income)<=s.ceiling&&s.courses.includes(p.course)&&s.categories.includes(p.category))?'POTENTIAL_MATCH':'EXCLUDED',quotedRule:s.rule,sourceUrl:s.sourceUrl,deadline:'UNVERIFIED',evidenceId:'EVD-'+p.recordId+'-'+s.id}));\\nreturn [{json:{recordId:$json.recordId,results,unresolved:['Rules and deadlines are illustrative and must be verified against official sources.'],submissionAllowed:false,humanApprovalRequired:true}}];"
+      },
+      "id": "evaluate",
+      "name": "Evaluate Demo Rules",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        750,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "return-results",
+      "name": "Return Results with Evidence",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Receive Synthetic Student Input": {
+      "main": [
+        [
+          {
+            "node": "Validate Required Inputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Required Inputs": {
+      "main": [
+        [
+          {
+            "node": "Missing Input Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Missing Input Check": {
+      "main": [
+        [
+          {
+            "node": "Return Needs Review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Evaluate Demo Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Demo Rules": {
+      "main": [
+        [
+          {
+            "node": "Return Results with Evidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "starter-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
