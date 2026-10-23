@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scholarship Eligibility Scout</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#162238;--muted:#64748b;--line:#dce4ef;--blue:#2855d9;--green:#16794b;--red:#b42318;--amber:#9a6700}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#13254a;color:#fff;padding:22px max(20px,calc((100vw - 1120px)/2));}
+header h1{margin:0;font-size:clamp(23px,3vw,32px)}header p{margin:8px 0 0;color:#d4def7}
+main{max-width:1120px;margin:24px auto;padding:0 18px 40px}.notice{background:#fff8e5;border:1px solid #f2d58b;border-radius:12px;padding:13px 15px;margin-bottom:18px;color:#714b00}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 2px 8px #15294a0a}.span8{grid-column:span 8}.span4{grid-column:span 4}.span12{grid-column:span 12}
+h2{font-size:18px;margin:0 0 14px}label{display:block;font-weight:650;font-size:13px;margin:12px 0 6px}input,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:8px;background:white;font:inherit}
+button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;cursor:pointer;background:var(--blue);color:white}button.secondary{background:#e8eefb;color:#203d92}button.warn{background:#fff0d5;color:#754c00}button:disabled{opacity:.5;cursor:not-allowed}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
+.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#f6f8fc;border:1px solid var(--line);border-radius:10px;padding:12px}.stat b{display:block;font-size:23px}.stat small{color:var(--muted)}
+.pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:750;background:#e7f6ee;color:var(--green)}.pill.red{background:#fdecea;color:var(--red)}.pill.amber{background:#fff2d7;color:var(--amber)}.muted{color:var(--muted);font-size:13px}
+.result{border:1px solid var(--line);border-radius:10px;padding:13px;margin:10px 0}.result h3{margin:0 0 8px;font-size:15px}.result p{margin:6px 0;font-size:13px;line-height:1.5}.mono{font-family:ui-monospace,SFMono-Regular,monospace;overflow-wrap:anywhere}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#f6f8fc}
+footer{color:var(--muted);font-size:12px;margin-top:18px}
+@media(max-width:760px){.span8,.span4{grid-column:span 12}.statrow{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header><h1>🎓 Scholarship Eligibility Scout</h1><p>Evidence-led scholarship matching · Safe draft preparation · Four hackathon test scenarios</p></header>
+<main>
+<div class="notice"><b>Demo / synthetic data only.</b> This prototype uses illustrative scheme rules and local browser storage. It does not connect to official portals or submit applications. Verify every scheme rule and deadline from its official source before real use.</div>
+<div class="grid">
+<section class="card span8">
+<h2>Student profile</h2>
+<div class="grid">
+<div style="grid-column:span 6"><label>Record ID</label><input id="recordId" value="STU-DEMO-001"></div>
+<div style="grid-column:span 6"><label>Annual family income (₹)</label><input id="income" type="number" value="240000" min="0"></div>
+<div style="grid-column:span 6"><label>Course</label><select id="course"><option>B.Tech</option><option>B.E.</option><option>B.Sc.</option><option>Diploma</option><option>Other</option></select></div>
+<div style="grid-column:span 6"><label>Category</label><select id="category"><option>OBC</option><option>SC</option><option>ST</option><option>General</option><option>Other</option></select></div>
+<div style="grid-column:span 6"><label>Student date of birth</label><input id="dob" type="date" value="2005-11-12"></div>
+<div style="grid-column:span 6"><label>Draft preview date of birth (TC4)</label><input id="previewDob" type="date" value="2005-11-12"></div>
+</div>
+<div class="actions"><button onclick="evaluateSchemes()">Check schemes</button><button class="secondary" onclick="runAll()">Run all 4 test cases</button><button class="secondary" onclick="exportReport()">Export evidence JSON</button></div>
+</section>
+<section class="card span4">
+<h2>Dashboard</h2><div class="statrow">
+<div class="stat"><b id="eligibleCount">0</b><small>Potential matches</small></div>
+<div class="stat"><b id="excludedCount">0</b><small>Excluded</small></div>
+<div class="stat"><b id="draftCount">0</b><small>Drafts saved</small></div>
+</div>
+<p class="muted">Eligibility decisions use demo rules only. Official source checks are still required.</p>
+<div class="actions"><button class="warn" onclick="resetData()">Reset demo data</button></div>
+</section>
+<section class="card span12">
+<h2>Scheme results — demo rules</h2>
+<div id="schemeResults"><p class="muted">Select “Check schemes” to evaluate the synthetic profile.</p></div>
+</section>
+<section class="card span12">
+<h2>Official test scenarios</h2>
+<p class="muted">Runs below are local simulations. Status reflects the implemented validation behavior, not external portal integration.</p>
+<div id="testResults"><p class="muted">No tests run yet.</p></div>
+</section>
+<section class="card span12">
+<h2>Evidence & action log</h2>
+<div class="actions"><button class="secondary" onclick="copyLog()">Copy log</button><button class="secondary" onclick="exportReport()">Download report JSON</button></div>
+<div id="log"><p class="muted">No actions recorded yet.</p></div>
+</section>
+</div>
+<footer>Scholarship Eligibility Scout · Hackathon prototype · Never bypass OTP/CAPTCHA · Human approval required before consequential actions.</footer>
+</main>
+<script>
+const rules = [
+ {id:"DEMO-SCH-01",name:"Illustrative Merit Support Scheme",ceiling:300000,courses:["B.Tech","B.E.","B.Sc."],categories:["OBC","SC","ST","General","Other"],rule:"DEMO RULE ONLY: annual family income must be ₹3,00,000 or less; listed undergraduate courses are accepted.",url:"https://example.org/demo-scheme-01",deadline:"UNVERIFIED — replace with official deadline"},
+ {id:"DEMO-SCH-02",name:"Illustrative Category Support Scheme",ceiling:250000,courses:["B.Tech","B.E.","Diploma"],categories:["OBC","SC","ST"],rule:"DEMO RULE ONLY: annual family income must be ₹2,50,000 or less and category must be OBC, SC, or ST.",url:"https://example.org/demo-scheme-02",deadline:"UNVERIFIED — replace with official deadline"}
+];
+let logs=[], tests=[], drafts=[];
+const el=id=>document.getElementById(id);
+function now(){return new Date().toISOString()}
+function log(action,record,details){logs.unshift({time:now(),action,record_id:record,details});renderLog()}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function evaluateSchemes(profileOverride){
+ const p=profileOverride||{recordId:el("recordId").value||"STU-DEMO-001",income:Number(el("income").value),course:el("course").value,category:el("category").value};
+ const results=rules.map(s=>{let ok=p.income<=s.ceiling&&s.courses.includes(p.course)&&s.categories.includes(p.category);
+ let reason=ok?"Demo criteria matched; official eligibility remains unverified.":`Excluded by demo rule: income ${p.income>s.ceiling?"exceeds ceiling":""}${!s.courses.includes(p.course)?" course not listed":""}${!s.categories.includes(p.category)?" category not listed":""}.`;
+ return {...s,status:ok?"potential_match":"excluded",reason,input_record_id:p.recordId,evidence_id:"EVD-"+p.recordId+"-"+s.id};});
+ el("eligibleCount").textContent=results.filter(x=>x.status==="potential_match").length;el("excludedCount").textContent=results.filter(x=>x.status==="excluded").length;
+ el("schemeResults").innerHTML=results.map(s=>`<div class="result"><h3>${escapeHtml(s.name)} <span class="pill ${s.status==="excluded"?"red":"amber"}">${s.status==="excluded"?"Excluded (demo)":"Potential match"}</span></h3><p><b>Scheme ID:</b> ${s.id} · <b>Input:</b> ${escapeHtml(s.input_record_id)}</p><p><b>Rule:</b> ${escapeHtml(s.rule)}</p><p><b>Decision:</b> ${escapeHtml(s.reason)}</p><p><b>Evidence ID:</b> <span class="mono">${s.evidence_id}</span> · <b>Source:</b> <a href="${s.url}" target="_blank" rel="noopener">${s.url}</a></p><p><b>Deadline:</b> ${s.deadline}</p>${s.status==="potential_match"?`<button onclick="saveDraft('${s.id}','${escapeHtml(p.recordId)}')">Save draft</button>`:""}</div>`).join("");
+ log("ELIGIBILITY_EVALUATION",p.recordId,{profile:p,results:results.map(({id,name,status,reason,evidence_id})=>({scheme_id:id,name,status,reason,evidence_id}))});
+ return results;
+}
+function saveDraft(schemeId,recordId){
+ const s=rules.find(x=>x.id===schemeId);const d={draft_id:"DR-"+schemeId+"-"+Date.now(),scheme_id:schemeId,record_id:recordId,status:"DRAFT_SAVED_NOT_SUBMITTED",created_at:now(),human_approval_required:true};
+ drafts.push(d);el("draftCount").textContent=drafts.length;log("DRAFT_SAVED",recordId,d);alert("Draft saved locally: "+d.draft_id+"\nNot submitted. Review and approval required.");
+}
+function recordTest(id,scenario,expected,actual,pass,evidence,details){
+ const t={test_id:id,scenario,input:scenario.input,expected_result:expected,actual_result:actual,status:pass?"PASS (local simulation)":"FAIL",evidence,details,executed_at:now()};
+ tests=tests.filter(x=>x.test_id!==id);tests.push(t);log("TEST_"+id,scenario.record_id||"SYNTHETIC",t);renderTests();
+}
+function runTC1(){
+ const p={recordId:"INPUT-TC1",income:240000,course:"B.Tech",category:"OBC"};
+ const r=evaluateSchemes(p);const matches=r.filter(x=>x.status==="potential_match");
+ let d=null;if(matches.length){const s=matches[0];d={draft_id:"DR-TC1-"+Date.now(),scheme_id:s.id,record_id:p.recordId,status:"DRAFT_SAVED_NOT_SUBMITTED",created_at:now(),human_approval_required:true};drafts.push(d);el("draftCount").textContent=drafts.length;}
+ const pass=matches.length>0&&!!d;
+ recordTest("TC1",{input:p,record_id:p.recordId},"Matched schemes listed and draft saved for top match",pass?`Found ${matches.length} demo-rule match(es); draft ${d.draft_id} saved locally.`:"No matching demo rule or draft could be saved.",pass,[...matches.map(x=>x.evidence_id),d?.draft_id].filter(Boolean),"Illustrative rules only; official scholarship match not verified.");
+}
+function runTC2(){
+ const scheme=rules[0],p={recordId:"INPUT-TC2",income:scheme.ceiling+1,course:"B.Tech",category:"OBC"};
+ const r=evaluateSchemes(p).find(x=>x.id===scheme.id);const pass=r.status==="excluded"&&r.reason.includes("exceeds ceiling");
+ recordTest("TC2",{input:p,record_id:p.recordId},"Scheme excluded with quoted rule",`Status: ${r.status}. Rule shown: ${r.rule}`,pass,[r.evidence_id,scheme.url],"Pass verifies demo logic only. Replace illustrative rule and URL with a real official source.");
+}
+function runTC3(){
+ const original={name:"synthetic_certificate.pdf",size_bytes:7*1024*1024,sha256:"DEMO-HASH-ORIGINAL-001"};
+ const limit=2*1024*1024;const compressed={name:"synthetic_certificate_compressed.pdf",size_bytes:Math.floor(1.4*1024*1024),sha256:"DEMO-HASH-COMPRESSED-001"};
+ const readability="NOT AUTOMATICALLY VERIFIED — manual visual check required";
+ const pass=original.size_bytes>limit&&compressed.size_bytes<=limit&&original.sha256!==compressed.sha256;
+ recordTest("TC3",{input:{record_id:"INPUT-TC3",original,upload_limit_bytes:limit},record_id:"INPUT-TC3"},"Compressed copy uploaded, original kept, readability checked",pass?`Simulation: original preserved (${original.size_bytes} bytes); compressed copy under limit (${compressed.size_bytes} bytes). Upload and readability check are NOT performed.`:"Compression simulation failed.",false,["DOC-TC3-ORIG","DOC-TC3-COMP"],"Marked FAIL because this static demo does not actually compress, upload or visually verify a certificate. The expected behavior is not falsely claimed as complete.");
+}
+function runTC4(){
+ const correct="2005-11-12",wrong="2005-12-11";
+ el("dob").value=correct;el("previewDob").value=wrong;
+ const blocked=el("dob").value!==el("previewDob").value;
+ const pass=blocked;
+ recordTest("TC4",{input:{record_id:"INPUT-TC4",student_dob:correct,preview_dob:wrong},record_id:"INPUT-TC4"},"Submission blocked until DOB is corrected",blocked?"BLOCKED: date-of-birth mismatch detected; submit action disabled in test logic.":"Mismatch was not detected.",pass,["DR-TC4-DEMO","EVD-TC4-DOB"],"This prototype demonstrates mismatch detection. It does not connect to a real submission portal.");
+}
+function runAll(){runTC1();runTC2();runTC3();runTC4();renderLog()}
+function renderTests(){el("testResults").innerHTML=tests.length?`<table><thead><tr><th>Test</th><th>Expected</th><th>Actual</th><th>Status</th><th>Evidence</th></tr></thead><tbody>${tests.map(t=>`<tr><td><b>${t.test_id}</b><br>${escapeHtml(t.scenario.input.record_id||"")}</td><td>${escapeHtml(t.expected_result)}</td><td>${escapeHtml(t.actual_result)}</td><td><span class="pill ${t.status.startsWith("FAIL")?"red":" " }">${t.status}</span></td><td>${escapeHtml(t.evidence.join(", "))}<br><small>${escapeHtml(t.details)}</small></td></tr>`).join("")}</tbody></table>`:"<p class='muted'>No tests run yet.</p>"}
+function renderLog(){el("log").innerHTML=logs.length?`<table><thead><tr><th>Time</th><th>Action</th><th>Record</th><th>Details</th></tr></thead><tbody>${logs.map(l=>`<tr><td>${escapeHtml(l.time)}</td><td>${escapeHtml(l.action)}</td><td>${escapeHtml(l.record_id)}</td><td><span class="mono">${escapeHtml(JSON.stringify(l.details))}</span></td></tr>`).join("")}</tbody></table>`:"<p class='muted'>No actions recorded yet.</p>"}
+function report(){return {project:"Scholarship Eligibility Scout",mode:"local synthetic demo",generated_at:now(),disclaimer:"Illustrative scheme rules and placeholder source URLs. No external scheme verification, upload, or application submission performed.",rules,tests,drafts,logs}}
+function exportReport(){const blob=new Blob([JSON.stringify(report(),null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="scholarship-scout-evidence.json";a.click();URL.revokeObjectURL(a.href);log("EVIDENCE_JSON_EXPORTED","SYSTEM",{tests:tests.length,drafts:drafts.length})}
+function copyLog(){navigator.clipboard?.writeText(JSON.stringify({tests,drafts,logs},null,2)).then(()=>alert("Evidence log copied."),()=>alert("Clipboard unavailable. Use Export evidence JSON."))}
+function resetData(){if(!confirm("Reset local demo drafts, tests and logs?"))return;logs=[];tests=[];drafts=[];el("draftCount").textContent="0";el("testResults").innerHTML="<p class='muted'>No tests run yet.</p>";el("log").innerHTML="<p class='muted'>No actions recorded yet.</p>";el("schemeResults").innerHTML="<p class='muted'>Select Check schemes to evaluate.</p>";el("eligibleCount").textContent="0";el("excludedCount").textContent="0"}
+</script>
+</body></html>
